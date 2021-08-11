@@ -1,0 +1,3 @@
+[submodule "sonarqube/chart"]
+	path = sonarqube/chart
+	url = https://github.com/SonarSource/helm-chart-sonarqube/

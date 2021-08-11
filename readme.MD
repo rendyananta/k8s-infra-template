@@ -1,5 +1,5 @@
 # Provisioning command
--- need to automated later.
+-- need to be automated later.
 
 ## Install Longhorn (Storage Class by Rancher)
 ```sh

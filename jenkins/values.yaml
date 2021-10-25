@@ -19,7 +19,7 @@ controller:
   # Used for label app.kubernetes.io/component
   componentName: "jenkins-controller"
   image: "jenkins/jenkins"
-  tag: "2.289.3-jdk11"
+  tag: "2.303.2-jdk11"
   imagePullPolicy: "Always"
   imagePullSecretName:
   # Optionally configure lifetime for controller-container
@@ -45,7 +45,7 @@ controller:
   # If you disable the non-Jenkins identity store and instead use the Jenkins internal one,
   # you should revert controller.adminUser to your preferred admin user:
   adminUser: "admin"
-  adminPassword: "jenkins-password"
+  adminPassword: "admin"
   admin:
     existingSecret: ""
     userKey: jenkins-admin-user
@@ -67,7 +67,7 @@ controller:
       memory: "256Mi"
     limits:
       cpu: "2000m"
-      memory: "2048Mi"
+      memory: "4096Mi"
   # Overrides the init container default values
   # initContainerResources:
   #   requests:
@@ -169,6 +169,16 @@ controller:
       # It delays the initial readyness probe while Jenkins is starting
       # initialDelaySeconds: 60
 
+  # PodDisruptionBudget config
+  podDisruptionBudget:
+    enabled: false
+    # For Kubernetes v1.5+, use 'policy/v1beta1'
+    # For Kubernetes v1.21+, use 'policy/v1'
+    apiVersion: "policy/v1beta1"
+    annotations: {}
+    labels: {}
+    # maxUnavailable: "0"
+
   agentListenerEnabled: true
   agentListenerPort: 50000
   agentListenerHostPort:
@@ -218,18 +228,18 @@ controller:
 
   # List of plugins to be install during Jenkins controller start
   installPlugins:
-    - kubernetes:1.30.1
+    - kubernetes:1.30.5
+    - configuration-as-code:1.54
     - kubernetes-cli:1.10.3
     - workflow-aggregator:2.6
-    - git:4.8.1
-    - configuration-as-code:1.51
+    - git:4.9.0
     - sonar:2.13.1
-    - blueocean:1.24.8
-    - durable-task:1.38
+    - blueocean:1.25.1
+    - durable-task:1.39
     - docker-workflow:1.26
 
   # Set to false to download the minimum required version of all dependencies.
-  installLatestPlugins: false
+  installLatestPlugins: true
 
   # Set to true to download latest dependencies of any plugin that is requested to have the latest version.
   installLatestSpecifiedPlugins: false
@@ -330,7 +340,7 @@ controller:
       # jcasc changes will cause a reboot and will only be applied at the subsequent start-up.  Auto-reload uses the
       # http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to the configScripts are detected.
       enabled: true
-      image: kiwigrid/k8s-sidecar:1.12.2
+      image: kiwigrid/k8s-sidecar:1.14.2
       imagePullPolicy: IfNotPresent
       resources: {}
         #   limits:
@@ -383,6 +393,9 @@ controller:
 
   terminationGracePeriodSeconds:
 
+  terminationMessagePath:
+  terminationMessagePolicy:
+
   tolerations: []
 
   affinity: {}
@@ -399,32 +412,44 @@ controller:
   updateStrategy: {}
 
   ingress:
+    # enabled: false
+    # # Override for the default paths that map requests to the backend
+    # paths: []
+    # # - backend:
+    # #     serviceName: ssl-redirect
+    # #     servicePort: use-annotation
+    # # - backend:
+    # #     serviceName: >-
+    # #       {{ template "jenkins.fullname" . }}
+    # #     # Don't use string here, use only integer value!
+    # #     servicePort: 8080
+    # # For Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'
+    # # For Kubernetes v1.19+, use 'networking.k8s.io/v1'
+    # apiVersion: "extensions/v1beta1"
+    # labels: {}
+    # annotations: {}
+    # # kubernetes.io/ingress.class: nginx
+    # # kubernetes.io/tls-acme: "true"
+    # # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
+    # # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
+    # # ingressClassName: nginx
+    # # Set this path to jenkinsUriPrefix above or use annotations to rewrite path
+    # # path: "/jenkins"
+    # # configures the hostname e.g. jenkins.example.com
+    # hostName:
+    # tls:
+    # # - secretName: jenkins.cluster.local
+    # #   hosts:
+    # #     - jenkins.cluster.local
     enabled: true
     # Override for the default paths that map requests to the backend
     paths: []
-    # - backend:
-    #     serviceName: ssl-redirect
-    #     servicePort: use-annotation
-    # - backend:
-    #     serviceName: >-
-    #       {{ template "jenkins.fullname" . }}
-    #     # Don't use string here, use only integer value!
-    #     servicePort: 8080
-    # For Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'
-    # For Kubernetes v1.19+, use 'networking.k8s.io/v1'
+
     apiVersion: "networking.k8s.io/v1"
     labels: {}
     annotations: 
       kubernetes.io/ingress.class: nginx
-      cert-manager.io/issuer: "letsencrypt-prod"
-
-    # kubernetes.io/tls-acme: "true"
-    # For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName
-    # See https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress
-    ingressClassName: nginx
-    # Set this path to jenkinsUriPrefix above or use annotations to rewrite path
-    # path: "/jenkins"
-    # configures the hostname e.g. jenkins.example.com
+      cert-manager.io/issuer: "jenkins-letsencrypt-prod"
     hostName: jenkins.k8s.rendyananta.my.id
     tls:
     - secretName: jenkins-tls
@@ -570,9 +595,9 @@ agent:
   kubernetesReadTimeout: 15
   maxRequestsPerHostStr: "32"
   namespace:
-  image: "rendyananta/jenkins-agent-docker-cli"
-  tag: "latest"
-  workingDir: "/home/jenkins"
+  image: "jenkins/inbound-agent"
+  tag: "4.11-1"
+  workingDir: "/home/jenkins/agent"
   nodeUsageMode: "NORMAL"
   customJenkinsLabels: []
   # name of the secret to be used for image pulling
@@ -694,21 +719,76 @@ agent:
   # controller.JCasC.defaultConfig: true
   # Best reference is https://<jenkins_url>/configuration-as-code/reference#Cloud-kubernetes. The example below creates a python pod template.
   podTemplates: {}
-  #  python: |
-  #    - name: python
-  #      label: jenkins-python
-  #      serviceAccount: jenkins
-  #      containers:
-  #        - name: python
-  #          image: python:3
-  #          command: "/bin/sh -c"
-  #          args: "cat"
-  #          ttyEnabled: true
-  #          privileged: true
-  #          resourceRequestCpu: "400m"
-  #          resourceRequestMemory: "512Mi"
-  #          resourceLimitCpu: "1"
-  #          resourceLimitMemory: "1024Mi"
+    # php: |
+    #   - name: php
+    #     label: jenkins-php
+    #     serviceAccount: jenkins
+    #     containers:
+    #     - name: composer
+    #       image: composer:2
+    #       imagePullPolicy: Always
+    #       command:
+    #         - sleep
+    #       args:
+    #         - 9999999
+    #     - name: php
+    #       image: chilio/laravel-dusk-ci:php-8.0
+    #       imagePullPolicy: Always
+    #       env:
+    #         - name: APP_URL
+    #           value: http://localhost
+    #         - name: DB_CONNECTION
+    #           value: mysql
+    #         - name: DB_HOST
+    #           value: 127.0.0.1
+    #         - name: DB_PORT
+    #           value: 3306
+    #         - name: DB_DATABASE
+    #           value: laravel
+    #         - name: DB_USERNAME
+    #           value: laravel
+    #         - name: DB_PASSWORD
+    #           value: laravel
+    #     - name: mariadb
+    #       image: mariadb:latest
+    #       env:
+    #         - name: MYSQL_RANDOM_ROOT_PASSWORD
+    #           value: "true"
+    #         - name: MYSQL_USER
+    #           value: laravel
+    #         - name: MYSQL_PASSWORD
+    #           value: laravel
+    #         - name: MYSQL_DATABASE
+    #           value: laravel
+    #       resources: {}
+    #       ports:
+    #         - containerPort: 3306
+    # kaniko: |
+    #   - name: kaniko
+    #     label: jenkins-kaniko
+    #     serviceAccount: jenkins
+    #     containers:
+    #     - name: kaniko
+    #       image: gcr.io/kaniko-project/executor:debug
+    #       imagePullPolicy: Always
+    #       command:
+    #         - sleep
+    #       args:
+    #         - 9999999
+    #       volumeMounts:
+    #       - name: jenkins-docker-cfg
+    #         mountPath: /kaniko/.docker
+    #       - name: kaniko-cache
+    #         mountPath: /cache
+    #     volumes:
+    #     - name: jenkins-docker-cfg
+    #       projected:
+    #         sources:
+    #         - secret:
+    #             name: docker-credentials
+    #             items:
+    #               - key: .dockerconfigjson
+    #                 path: config.json
 
 # Here you can add additional agents
 # They inherit all values from `agent` so you only need to specify values which differ
@@ -743,8 +823,9 @@ persistence:
   ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
   ##   GKE, AWS & OpenStack)
   ##
-  storageClass: null
+  storageClass:
   annotations: {}
+  labels: {}
   accessMode: "ReadWriteOnce"
   size: "8Gi"
   volumes:
@@ -778,9 +859,9 @@ rbac:
   readSecrets: false
 
 serviceAccount:
-  create: false
+  create: true
   # The name of the service account is autogenerated by default
-  name: jenkins
+  name:
   annotations: {}
   imagePullSecretName:
 
@@ -790,7 +871,7 @@ serviceAccountAgent:
   create: false
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
-  name: jenkins
+  name:
   annotations: {}
   imagePullSecretName:
 
@@ -862,3 +943,9 @@ backup:
   #    - NET_RAW
 checkDeprecation: true
 
+awsSecurityGroupPolicies:
+  enabled: false
+  policies:
+    - name: ""
+      securityGroupIds: []
+      podSelector: {}

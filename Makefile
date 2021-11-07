@@ -1,22 +1,23 @@
 .PHONY:
 	ops.up
 	ops.down
-	env.up
-	env.down
+	env.init
+	env.mysql.up
+	env.mysql.down
+	env.postgresql.up
+	env.postgresql.down
 
 ops.up:
-	echo "preparing namespaces.."
-	kubectl create namespace ops
 	echo "updating helm repository.."
 	helm repo add jenkins https://charts.jenkins.io
 	helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
 	helm repo update
 	echo "installing jenkins.."
 	kubectl -n ops apply -f jenkins/kube-resources
-	helm -n ops upgrade --install jenkins-ci jenkins/jenkins -f jenkins/values.yaml
+	helm -n ops upgrade --install --create-namespace jenkins-ci jenkins/jenkins -f jenkins/values.yaml
 	echo "installing sonarqube.."
 	kubectl -n ops apply -f sonarqube/kube-resources
-	helm -n ops upgrade --install sonarqube sonarqube/sonarqube -f sonarqube/values.yaml
+	helm -n ops upgrade --install --create-namespace sonarqube sonarqube/sonarqube -f sonarqube/values.yaml
 
 ops.down:
 	echo "uninstalling jenkins.."
@@ -26,7 +27,24 @@ ops.down:
 	helm -n ops uninstall sonarqube
 	kubectl -n ops delete -f sonarqube/kube-resources
 
-env.up:
+env.init:
+	echo "updating helm repository.."
+	helm repo add bitnami https://charts.bitnami.com/bitnami
+	helm repo update
 
-env.down:
+env.mysql.up: env.init
+	echo "installing mysql.."
+	helm -n database upgrade --install --create-namespace mysql bitnami/mysql --set auth.rootPassword=secretpassword
+
+env.mysql.down:
+	echo "uninstalling mysql.."
+	helm -n database uninstall mysql
+
+env.postgresql.up: env.init
+	echo "installing postgresql.."
+	helm -n database upgrade --install --create-namespace postgresql bitnami/postgresql --set auth.rootPassword=secretpassword
+
+env.postgresql.down:
+	echo "uninstalling postgresql.."
+	helm -n database uninstall postgresql
 

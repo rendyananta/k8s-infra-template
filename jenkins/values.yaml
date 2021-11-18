@@ -595,8 +595,8 @@ agent:
   kubernetesReadTimeout: 15
   maxRequestsPerHostStr: "32"
   namespace:
-  image: "jenkins/inbound-agent"
-  tag: "4.11-1"
+  image: "rendyananta/jenkins-agent-k8s"
+  tag: "latest"
   workingDir: "/home/jenkins/agent"
   nodeUsageMode: "NORMAL"
   customJenkinsLabels: []

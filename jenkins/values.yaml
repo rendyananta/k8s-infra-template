@@ -232,7 +232,7 @@ controller:
     - configuration-as-code:1.54
     - kubernetes-cli:1.10.3
     - workflow-aggregator:2.6
-    - git:4.9.0
+    - git:4.10.0
     - sonar:2.13.1
     - blueocean:1.25.1
     - durable-task:1.39

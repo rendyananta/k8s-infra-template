@@ -9,15 +9,12 @@
 	env.postgresql.down
 
 ops.init:
-	echo "creating ops namespace"
 	echo "installing nginx ingress controller"
 	helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
 	echo "installing cert-manager"
 	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.0/cert-manager.yaml
-	sleep 10
-	echo "waiting.."
 
-ops.up: ops.init
+ops.up: 
 	echo "updating helm repository.."
 	helm repo add jenkins https://charts.jenkins.io
 	helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube

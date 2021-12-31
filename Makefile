@@ -24,8 +24,8 @@ ops.up: ops.init
 	helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
 	helm repo update
 	echo "installing jenkins.."
-	kubectl -n ops apply -f jenkins/kube-resources
 	helm -n ops upgrade --install --create-namespace jenkins-ci jenkins/jenkins -f jenkins/values.yaml
+	kubectl -n ops apply -f jenkins/kube-resources
 	echo "installing sonarqube.."
 	kubectl -n ops apply -f sonarqube/kube-resources
 	helm -n ops upgrade --install --create-namespace sonarqube sonarqube/sonarqube -f sonarqube/values.yaml

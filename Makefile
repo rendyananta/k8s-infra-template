@@ -10,11 +10,15 @@
 
 ops.init:
 	echo "installing nginx ingress controller"
-	helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace
+	helm -n ingress-nginx upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --create-namespace
+	kubectl rollout status deployment -n ingress-nginx ingress-nginx-controller
 	echo "installing cert-manager"
 	kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.6.0/cert-manager.yaml
+	kubectl rollout status deployment -n cert-manager cert-manager
+	kubectl rollout status deployment -n cert-manager cert-manager-cainjector
+	kubectl rollout status deployment -n cert-manager cert-manager-webhook
 
-ops.up: 
+ops.up: ops.init
 	echo "updating helm repository.."
 	helm repo add jenkins https://charts.jenkins.io
 	helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
@@ -26,7 +30,7 @@ ops.up:
 	kubectl -n ops apply -f sonarqube/kube-resources
 	helm -n ops upgrade --install --create-namespace sonarqube sonarqube/sonarqube -f sonarqube/values.yaml
 
-ops.down: ops.init
+ops.down: 
 	echo "uninstalling jenkins.."
 	helm -n ops uninstall jenkins-ci
 	kubectl -n ops delete -f jenkins/kube-resources

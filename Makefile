@@ -53,7 +53,7 @@ env.mysql.down:
 
 env.postgresql.up: env.init
 	echo "installing postgresql.."
-	helm -n database upgrade --install --create-namespace postgresql bitnami/postgresql --set auth.rootPassword=secretpassword
+	helm -n database upgrade --install --create-namespace postgresql bitnami/postgresql --set postgresqlPostgresPassword=secretpassword
 
 env.postgresql.down:
 	echo "uninstalling postgresql.."
